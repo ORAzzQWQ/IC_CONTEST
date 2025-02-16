@@ -1,0 +1,58 @@
+m255
+K4
+z2
+!s11f vlog 2020.1 2020.02, Feb 28 2020
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+dC:/intelFPGA/20.1
+vCS
+Z0 !s110 1738840140
+!i10b 1
+!s100 H4L?SYi<gXd;Fj>b<R>iS1
+Z1 !s11b Dg1SIo80bB@j0V0VzS_@n1
+IPacHdVQgPBURCYRhM_SWP3
+Z2 VDg1SIo80bB@j0V0VzS_@n1
+Z3 dC:/IC_CONTEST/2005
+w1738840137
+8C:/IC_CONTEST/2005/CS.v
+FC:/IC_CONTEST/2005/CS.v
+!i122 28
+L0 5 55
+Z4 OV;L;2020.1;71
+r1
+!s85 0
+31
+Z5 !s108 1738840140.000000
+!s107 C:/IC_CONTEST/2005/CS.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/IC_CONTEST/2005/CS.v|
+!i113 1
+Z6 o-work work
+Z7 tCvgOpt 0
+n@c@s
+vtest
+R0
+!i10b 1
+!s100 cbRcZI4kzg2aoOIJ284N=1
+R1
+I@i:McEmbISM;>9m22l;8j2
+R2
+R3
+w1738831725
+8C:/IC_CONTEST/2005/testfixture.v
+FC:/IC_CONTEST/2005/testfixture.v
+!i122 29
+L0 7 120
+R4
+r1
+!s85 0
+31
+R5
+!s107 C:/IC_CONTEST/2005/testfixture.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/IC_CONTEST/2005/testfixture.v|
+!i113 1
+R6
+R7
