@@ -9,9 +9,11 @@ output          output_valid;
 output          busy;
 
 reg [2:0] state, next_state;
-reg [7:0] img [5:0][5:0];
-reg [5:0] cnt;
+reg [7:0] img [5:0];
+reg [5:0] cnt,mul;
 reg [5:0] outcnt;
+reg [5:0] out_x, out_y;
+
 
 parameter Reflash = 0, Load = 1, Right = 2, Left = 3, Up = 4, Down = 5;
 parameter DECODE = 0, LOAD = 1, CAL = 2, DISPLAY = 3;
@@ -38,14 +40,14 @@ always@(*) begin
             end
         end
         LOAD:begin
-            if(cnt >= 36) next_state = DISPLAY;
+            if(cnt >= 35) next_state = DISPLAY;
             else next_state = LOAD;
         end
         CAL:begin
             next_state = DISPLAY;
         end
         DISPLAY:begin
-            if(outcnt >= 9) next_state = DECODE;
+            if(outcnt >= 8) next_state = DECODE;
             else next_state = DISPLAY;
         end
     end
@@ -55,30 +57,62 @@ end
 always@(posedge clk or posedge reset)begin
     if(reset)begin
         cnt <= 0;
-        for(integer i=0;i<6;i++)
-            for(integer j=0; j<6;j++)
-                img[i][j] <= 0;
+        outcnt <= 0;
+        mul <= 0;
+        busy <= 0;
+        for(integer i=0;i<36;i++)
+            img[i] <= 0;
     end
     else begin
         state <= next_state;
 
-        case(cmd) begin
-            Reflash:begin
-
+        case(state)begin
+            DECODE:begin
+                cnt <= 0;
+                busy <= 1;
             end
-            Load:begin
+            LOAD:begin
+                img[cnt] <= datain;
+                cnt <= cnt+1;
+                out_x <= 2;
+                out_y <= 2;
             end
-            Right:begin
+            CAL:begin
+                case(cmd) begin
+                    Right:begin
+                        if(out_x<3) out_x <= out_x+1;
+                        else out_x <= out_x;
+                    end
+                    Left:begin
+                        if(out_x>=1) out_x <= out_x-1;
+                        else out_x <= out_x;
+                    end
+                    Up:begin
+                        if(out_y>=1) out_y <= out_y-1;
+                        else out_y <= out_y;
+                    end
+                    Down:begin
+                        if(out_y<3) out_y <= out_y+1;
+                        else out_y <= out_y;
+                    end
+                end
+                endcase
             end
-            Left:begin
-            end
-            Up:begin
-            end
-            Down:begin
+            DISPLAY:begin
+                dataout <= img[mul];
+                outcnt <= outcnt + 1;
             end
         end
         endcase
+
+
     end
+end
+
+always@(*)begin
+    if(cnt < 3) mul = out_y*2 + out_x;
+    else if(cnt < 6) mul = out_y*3 + out_x;
+    else mul = out_y*3 + out_x;
 end
 
 
