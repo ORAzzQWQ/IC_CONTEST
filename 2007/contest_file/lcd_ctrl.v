@@ -5,11 +5,11 @@ input   [7:0]   datain;
 input   [2:0]   cmd;
 input           cmd_valid;
 output reg [7:0]   dataout;
-output          output_valid;
+output reg      output_valid;
 output reg      busy;
 
 reg [2:0] state, next_state;
-reg [7:0] img [5:0];
+reg [7:0] img [35:0];
 reg [5:0] cnt,mul,i;
 reg [5:0] outcnt;
 reg [5:0] out_x, out_y;
@@ -22,6 +22,7 @@ always@(*) begin
     case(state)
         DECODE:begin
             if(cmd_valid) begin
+                busy = 1;
                 case(cmd)
                     Reflash:begin
                         next_state = DISPLAY;
@@ -35,17 +36,21 @@ always@(*) begin
                 endcase
             end
             else begin
+                busy = 0;
                 next_state = DECODE;
             end
         end
         LOAD:begin
+            busy = 1;
             if(cnt >= 35) next_state = DISPLAY;
             else next_state = LOAD;
         end
         CAL:begin
+            busy = 1;
             next_state = DISPLAY;
         end
         DISPLAY:begin
+            busy = 1;
             if(outcnt >= 8) next_state = DECODE;
             else next_state = DISPLAY;
         end
@@ -54,6 +59,7 @@ end
 
 always@(posedge clk or posedge reset)begin
     if(reset)begin
+        state <= DECODE;
         cnt <= 0;
         outcnt <= 0;
         mul <= 0;
@@ -67,15 +73,19 @@ always@(posedge clk or posedge reset)begin
         case(state)
             DECODE:begin
                 cnt <= 0;
-                busy <= 1;
+                outcnt <= 0;
+                // busy <= 0;
+                output_valid <= 0;
             end
             LOAD:begin
+                // busy <= 1;
                 img[cnt] <= datain;
                 cnt <= cnt+1;
                 out_x <= 2;
                 out_y <= 2;
             end
             CAL:begin
+                // busy <= 1;
                 case(cmd)
                     Right:begin
                         if(out_x<3) out_x <= out_x+1;
@@ -96,6 +106,8 @@ always@(posedge clk or posedge reset)begin
                 endcase
             end
             DISPLAY:begin
+                // busy <= 1;
+                output_valid <= 1;
                 dataout <= img[mul];
                 outcnt <= outcnt + 1;
             end
@@ -106,11 +118,9 @@ always@(posedge clk or posedge reset)begin
 end
 
 always@(*)begin
-    if(cnt < 3) mul = out_y*2 + out_x;
-    else if(cnt < 6) mul = out_y*3 + out_x;
-    else mul = out_y*3 + out_x;
+    if(outcnt < 3) mul = out_y*6 + out_x + outcnt;
+    else if(outcnt < 6) mul = out_y*6 + out_x + outcnt +3;
+    else mul = out_y*6 + out_x + outcnt + 6;
 end
-
-
                                                                                      
 endmodule
