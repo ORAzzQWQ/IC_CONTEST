@@ -4,13 +4,13 @@ input           reset;
 input   [7:0]   datain;
 input   [2:0]   cmd;
 input           cmd_valid;
-output  [7:0]   dataout;
+output reg [7:0]   dataout;
 output          output_valid;
-output          busy;
+output reg      busy;
 
 reg [2:0] state, next_state;
 reg [7:0] img [5:0];
-reg [5:0] cnt,mul;
+reg [5:0] cnt,mul,i;
 reg [5:0] outcnt;
 reg [5:0] out_x, out_y;
 
@@ -19,10 +19,10 @@ parameter Reflash = 0, Load = 1, Right = 2, Left = 3, Up = 4, Down = 5;
 parameter DECODE = 0, LOAD = 1, CAL = 2, DISPLAY = 3;
 
 always@(*) begin
-    case(state) begin
+    case(state)
         DECODE:begin
             if(cmd_valid) begin
-                case(cmd)begin
+                case(cmd)
                     Reflash:begin
                         next_state = DISPLAY;
                     end
@@ -32,7 +32,6 @@ always@(*) begin
                     default:begin
                         next_state = CAL;
                     end
-                end
                 endcase
             end
             else begin
@@ -50,7 +49,6 @@ always@(*) begin
             if(outcnt >= 8) next_state = DECODE;
             else next_state = DISPLAY;
         end
-    end
     endcase
 end
 
@@ -60,13 +58,13 @@ always@(posedge clk or posedge reset)begin
         outcnt <= 0;
         mul <= 0;
         busy <= 0;
-        for(integer i=0;i<36;i++)
+        for(i=0;i<36; i=i+1)
             img[i] <= 0;
     end
     else begin
         state <= next_state;
 
-        case(state)begin
+        case(state)
             DECODE:begin
                 cnt <= 0;
                 busy <= 1;
@@ -78,7 +76,7 @@ always@(posedge clk or posedge reset)begin
                 out_y <= 2;
             end
             CAL:begin
-                case(cmd) begin
+                case(cmd)
                     Right:begin
                         if(out_x<3) out_x <= out_x+1;
                         else out_x <= out_x;
@@ -95,14 +93,12 @@ always@(posedge clk or posedge reset)begin
                         if(out_y<3) out_y <= out_y+1;
                         else out_y <= out_y;
                     end
-                end
                 endcase
             end
             DISPLAY:begin
                 dataout <= img[mul];
                 outcnt <= outcnt + 1;
             end
-        end
         endcase
 
 
