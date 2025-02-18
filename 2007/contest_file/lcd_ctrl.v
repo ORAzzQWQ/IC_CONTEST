@@ -13,6 +13,7 @@ reg [7:0] img [35:0];
 reg [5:0] cnt,mul,i;
 reg [5:0] outcnt;
 reg [5:0] out_x, out_y;
+reg [2:0] cmd_reg;
 
 
 parameter Reflash = 0, Load = 1, Right = 2, Left = 3, Up = 4, Down = 5;
@@ -22,7 +23,7 @@ always@(*) begin
     case(state)
         DECODE:begin
             if(cmd_valid) begin
-                busy = 1;
+                cmd_reg = cmd;
                 case(cmd)
                     Reflash:begin
                         next_state = DISPLAY;
@@ -41,17 +42,14 @@ always@(*) begin
             end
         end
         LOAD:begin
-            busy = 1;
             if(cnt >= 35) next_state = DISPLAY;
             else next_state = LOAD;
         end
         CAL:begin
-            busy = 1;
             next_state = DISPLAY;
         end
         DISPLAY:begin
-            busy = 1;
-            if(outcnt >= 8) next_state = DECODE;
+            if(outcnt >= 9) next_state = DECODE;
             else next_state = DISPLAY;
         end
     endcase
@@ -74,19 +72,19 @@ always@(posedge clk or posedge reset)begin
             DECODE:begin
                 cnt <= 0;
                 outcnt <= 0;
-                // busy <= 0;
+                busy <= 1;
                 output_valid <= 0;
             end
             LOAD:begin
-                // busy <= 1;
+                busy <= 1;
                 img[cnt] <= datain;
                 cnt <= cnt+1;
                 out_x <= 2;
                 out_y <= 2;
             end
             CAL:begin
-                // busy <= 1;
-                case(cmd)
+                busy <= 1;
+                case(cmd_reg)
                     Right:begin
                         if(out_x<3) out_x <= out_x+1;
                         else out_x <= out_x;
@@ -106,10 +104,16 @@ always@(posedge clk or posedge reset)begin
                 endcase
             end
             DISPLAY:begin
-                // busy <= 1;
-                output_valid <= 1;
-                dataout <= img[mul];
-                outcnt <= outcnt + 1;
+                if(outcnt >= 9) begin
+                    busy <= 0;
+                    output_valid <= 0;
+                end
+                else begin
+                    busy <= 1;
+                    output_valid <= 1;
+                    dataout <= img[mul];
+                    outcnt <= outcnt + 1;
+                end
             end
         endcase
 
