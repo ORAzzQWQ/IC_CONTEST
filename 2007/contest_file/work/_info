@@ -9,13 +9,13 @@ z2
 cModel Technology
 dC:/intelFPGA/18.1
 vlcd_ctrl
-Z0 !s110 1739860563
+Z0 !s110 1739860970
 !i10b 1
-!s100 S;>>Q4=L3BDk[<`6>Bo832
-IHjVG7Qn=I=J=<][FQ4zHk0
+!s100 _?=E_3flMVdYK;h;Jd7zB2
+I@cnC4HBKdVcHK31@5:z9k0
 Z1 VDg1SIo80bB@j0V0VzS_@n1
 Z2 dC:/IC_CONTEST/2007/contest_file
-w1739860559
+w1739860950
 8C:/IC_CONTEST/2007/contest_file/lcd_ctrl.v
 FC:/IC_CONTEST/2007/contest_file/lcd_ctrl.v
 L0 1
@@ -23,7 +23,7 @@ Z3 OV;L;10.5b;63
 r1
 !s85 0
 31
-Z4 !s108 1739860563.000000
+Z4 !s108 1739860970.000000
 !s107 C:/IC_CONTEST/2007/contest_file/lcd_ctrl.v|
 !s90 -reportprogress|300|-work|work|-stats=none|C:/IC_CONTEST/2007/contest_file/lcd_ctrl.v|
 !i113 1
@@ -32,11 +32,11 @@ Z6 tCvgOpt 0
 vtest
 R0
 !i10b 1
-!s100 0eKjl0liPz@?olP]EX]n52
-IP11Dfmzg>bk4ODN0W4XEh0
+!s100 nJ^m]Z9dFahk_@X9dWb5[3
+Ib8n7?QLbGGHN[V4XSQ=Ll0
 R1
 R2
-w1739784429
+w1739860846
 8C:/IC_CONTEST/2007/contest_file/testfixture.v
 FC:/IC_CONTEST/2007/contest_file/testfixture.v
 L0 8

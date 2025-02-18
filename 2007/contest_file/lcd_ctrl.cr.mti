@@ -1,13 +1,4 @@
-C:/IC_CONTEST/2007/contest_file/lcd_ctrl.v {0 {vlog -work work -stats=none C:/IC_CONTEST/2007/contest_file/lcd_ctrl.v
-Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
--- Compiling module lcd_ctrl
-** Error: (vlog-13069) C:/IC_CONTEST/2007/contest_file/lcd_ctrl.v(27): near "=": syntax error, unexpected '=', expecting ++ or --.
-** Error: (vlog-13025) C:/IC_CONTEST/2007/contest_file/lcd_ctrl.v(28): near ":": Syntax error. Statement labels are only allowed in SystemVerilog.
-** Error: (vlog-13025) C:/IC_CONTEST/2007/contest_file/lcd_ctrl.v(31): near ":": Syntax error. Statement labels are only allowed in SystemVerilog.
-** Error: (vlog-13069) C:/IC_CONTEST/2007/contest_file/lcd_ctrl.v(39): near "else": syntax error, unexpected else.
-** Error: C:/IC_CONTEST/2007/contest_file/lcd_ctrl.v(41): (vlog-13205) Syntax error found in the scope following 'next_state'. Is there a missing '::'?
-
-} {4.0 9.0} {}} C:/IC_CONTEST/2007/contest_file/testfixture.v {1 {vlog -work work -stats=none C:/IC_CONTEST/2007/contest_file/testfixture.v
+C:/IC_CONTEST/2007/contest_file/testfixture.v {1 {vlog -work work -stats=none C:/IC_CONTEST/2007/contest_file/testfixture.v
 Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
 -- Compiling module test
 

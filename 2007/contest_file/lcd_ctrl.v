@@ -122,9 +122,9 @@ always@(posedge clk or posedge reset)begin
 end
 
 always@(*)begin
-    if(outcnt < 3) mul = out_y*6 + out_x + outcnt;
-    else if(outcnt < 6) mul = out_y*6 + out_x + outcnt +3;
-    else mul = out_y*6 + out_x + outcnt + 6;
+    if(outcnt < 3) mul = (out_y<<2) +(out_y<<1) + out_x + outcnt;
+    else if(outcnt < 6) mul = (out_y<<2) +(out_y<<1) + out_x + outcnt +3;
+    else mul = (out_y<<2) +(out_y<<1) + out_x + outcnt + 6;
 end
                                                                                      
 endmodule
