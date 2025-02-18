@@ -1,4 +1,11 @@
-C:/IC_CONTEST/2007/contest_file/testfixture.v {1 {vlog -work work -stats=none C:/IC_CONTEST/2007/contest_file/testfixture.v
+C:/IC_CONTEST/2007/contest_file/lcd_ctrl.v {1 {vlog -work work -stats=none C:/IC_CONTEST/2007/contest_file/lcd_ctrl.v
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module lcd_ctrl
+
+Top level modules:
+	lcd_ctrl
+
+} {} {}} C:/IC_CONTEST/2007/contest_file/testfixture.v {1 {vlog -work work -stats=none C:/IC_CONTEST/2007/contest_file/testfixture.v
 Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
 -- Compiling module test
 
