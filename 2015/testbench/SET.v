@@ -125,8 +125,8 @@ always @(posedge clk or posedge rst) begin
 end
 
 always@(*) begin
-    x_min_A = x1 - r1 >= 1 ? x1 - r1 : 1;
-    y_min_A = y1 - r1 >= 1 ? y1 - r1 : 1;
+    x_min_A = x1 >= 1 + r1 ? x1 - r1 : 1; //change x1 - r1 >= 1 to x1 >= 1 + r1
+    y_min_A = y1 >= 1 + r1 ? y1 - r1 : 1;
     x_max_A = x1 + r1 >= 8 ? 8 : x1 + r1;
     y_max_A = y1 + r1 >= 8 ? 8 : y1 + r1;
 
