@@ -11,20 +11,37 @@ output reg [7:0] candidate;
 
 reg [3:0] x1, y1, x2, y2, r1, r2;
 reg [1:0] mode_reg;
-reg A[6:0][6:0], B[6:0][6:0];
-reg [2:0] i, j, x_min_A, y_min_A, x_max_A, y_max_A, x_min_B, y_min_B, x_max_B, y_max_B;
-reg [6:0] r1_s, r2_s, i_s, cnt;
-reg cal_done;
+reg [3:0] i, j, x_min_A, y_min_A, x_max_A, y_max_A, x_min_B, y_min_B, x_max_B, y_max_B;
+reg [6:0] cnt;
+reg [2:0] cal_cnt;
+reg [2:0] cal_done;
+reg [3:0] i_bar, j_bar;
 
 
 reg [1:0] state, next_state;
-parameter LOAD = 0, CAL = 1, OUT = 2;
+parameter LOAD = 0, CAL_p = 1, CAL = 2, OUT = 3;
+
+reg [6:0] table_S [7:0];
+
+initial begin
+    table_S[0] = 7'd0;
+    table_S[1] = 7'd1;
+    table_S[2] = 7'd4;
+    table_S[3] = 7'd9;
+    table_S[4] = 7'd16;
+    table_S[5] = 7'd25;
+    table_S[6] = 7'd36;
+    table_S[7] = 7'd49;
+end
 
 always@(*) begin
     case(state)
         LOAD:begin
             if(en) next_state = CAL;
             else next_state = LOAD;
+        end
+        CAL_p:begin
+            next_state = CAL;
         end
         CAL:begin
             if(cal_done) next_state = OUT;
@@ -46,47 +63,50 @@ always @(posedge clk or posedge rst) begin
         r1 <= 0;
         r2 <= 0;
         r2 <= 0;
-        busy <= 1;
+        i <= 0;
+        j <= 0;
+        busy <= 0;
         cnt <= 0;
+        cal_cnt <= 0;
         cal_done <= 0;
-        for(i = 0; i<7; i=i+1)
-            for(j = 0; j<7; j=j+1)begin
-                A[i][j] <= 0;
-                B[i][j] <= 0;
-            end
+        valid <= 0;
+        cnt <= 0;
     end
     else begin
         state <= next_state;
         case(state)
             LOAD:begin
-                busy <= 0;
+                busy <= 1;
                 {x1, y1, x2, y2} <= central[23:8];
                 {r1, r2} <= radius[11:4];
                 mode_reg <= mode;
+                i <= 1;
+                j <= 1;
+                cnt <= 0;
+                cal_done <= 0;
+            end
+            CAL_p:begin
+                i <= x_min_A;
+                j <= y_min_A;
             end
             CAL:begin
                 busy <= 1;
-                next_state = OUT;
                 case(mode_reg)
                     2'b00:begin
-                        for(i = 0; i<7; i=i+1)
-                            for(j = 0; j<7; j=j+1)begin
-                                A[i][j] <= 0;
-                                B[i][j] <= 0;
+                        if(j <= y_max_A) begin
+                            if(i <= x_max_A) begin
+                                if(table_S[i_bar] + table_S[j_bar] <= table_S[r1]) cnt <= cnt + 1;
+                                i <= i+1;
                             end
-                        cal_done <= 1;
-                        // A[5][5] <= 1;
-                        // for(i = x_min_A-1; i<x_max_A-1; i=i+1)begin
-                        //     i_s = i*i;
-                        //     // for(j = y_min_A-1; j<y_max_A-1; j=j+1)begin
-                        //     //     if(i_s + j*j <= r1_s) begin
-                        //     //         A[i][j] <= 1;
-                        //     //         cnt <= cnt + 1;
-                        //     //     end
-                        //     //     else begin
-                        //     //     end
-                        //     // end
-                        // end
+                            else begin
+                                i <= x_min_A;
+                                j <= j+1;
+                            end
+                        end
+                        else begin
+                            cal_done <= 1;
+                            valid <= 1;
+                        end
                     end
                     2'b01:begin
                     end
@@ -95,8 +115,8 @@ always @(posedge clk or posedge rst) begin
                 endcase
             end
             OUT:begin
-                busy <= 1;
-                next_state = LOAD;
+                busy <= 0;
+                valid <= 0;
             end
 
         endcase
@@ -114,8 +134,11 @@ always@(*) begin
     y_min_B = y2 - r2 >= 1 ? y2 - r2 : 1;
     x_max_B = x2 + r2 >= 8 ? 8 : x2 + r2;
     y_max_B = y2 + r2 >= 8 ? 8 : y2 + r2;
-    r1_s = r1*r1;
-    r2_s = r2*r2;
+
+    i_bar = i >= x1 ? i-x1 : x1-i;
+    j_bar = j >= y1 ? j-y1 : y1-j;
+    
+    candidate = cnt;
 end
 
 endmodule
