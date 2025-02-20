@@ -139,16 +139,20 @@ always @(posedge clk or posedge rst) begin
                     2'b10:begin
                         if(j <= y_max_AB_2) begin
                             if(i <= x_max_AB_2) begin
-                                if(table_S[i_bar] + table_S[j_bar] <= table_S[r1] || table_S[i_bar_B] + table_S[j_bar_B] <= table_S[r2] ) begin
-                                    if(table_S[i_bar] + table_S[j_bar] <= table_S[r1] && table_S[i_bar_B] + table_S[j_bar_B] <= table_S[r2]) begin
-                                    end
-                                    else begin
-                                        cnt <= cnt + 1;
-                                    end
-                                    // if (!(table_S[i_bar] + table_S[j_bar] <= table_S[r1] && table_S[i_bar_B] + table_S[j_bar_B] <= table_S[r2])) begin
-                                    //     cnt <= cnt + 1;
-                                    // end
+                                if(((table_S[i_bar] + table_S[j_bar]) <= table_S[r1]) ^ ((table_S[i_bar_B] + table_S[j_bar_B]) <= table_S[r2])) begin
+                                    cnt <= cnt + 1;
                                 end
+
+                                // if(table_S[i_bar] + table_S[j_bar] <= table_S[r1] || table_S[i_bar_B] + table_S[j_bar_B] <= table_S[r2] ) begin
+                                //     if(table_S[i_bar] + table_S[j_bar] <= table_S[r1] && table_S[i_bar_B] + table_S[j_bar_B] <= table_S[r2]) begin
+                                //     end
+                                //     else begin
+                                //         cnt <= cnt + 1;
+                                //     end
+                                //     // if (!(table_S[i_bar] + table_S[j_bar] <= table_S[r1] && table_S[i_bar_B] + table_S[j_bar_B] <= table_S[r2])) begin
+                                //     //     cnt <= cnt + 1;
+                                //     // end
+                                // end
                                 i <= i+1;
                             end
                             else begin
