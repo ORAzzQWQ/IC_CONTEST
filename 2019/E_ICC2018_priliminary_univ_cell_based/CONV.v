@@ -28,13 +28,17 @@ module  CONV(
 	wire signed [39:0] k0, k1, k2, k3, k4, k5, k6, k7, k8;  // 40-bit 乘法結果
 	wire signed [39:0] data_temp;
 	wire signed [19:0] data, data_Relu;
+	wire [6:0] x, y;
 
 
 
-	parameter LOAD = 0, CAL = 1, DONE = 2;
+	parameter LOAD = 0, CAL = 1, DONE = 2, LOAD_pre = 3;
 
 	always@(*) begin
 		case(state)
+			LOAD_pre: begin
+				next_state = LOAD;
+			end
 			LOAD: begin
 				if(iaddr >= 4095) next_state = CAL;
 				else next_state = LOAD;
@@ -52,7 +56,7 @@ module  CONV(
 
 	always @(posedge clk or posedge reset) begin
 		if(reset) begin
-			state <= LOAD;
+			state <= LOAD_pre;
 			cnt <= 0;
 			crd <= 0;
 			cwr <= 0;
@@ -66,35 +70,20 @@ module  CONV(
 			for(i=0; i<66; i=i+1)
 				for(j=0;j<66;j=j+1)
 					pixels[i][j] <= 0;
-
 		end
 		else begin
 			state <= next_state;
 			case(state)
+				LOAD_pre:begin
+					busy <= 1;
+					pixels[x+1][y+1] <= idata; //zero-padding
+					i <= 1;
+					j <= 1;
+				end
 				LOAD:begin
 					busy <= 1;
-					if(i >= 66 && j >= 66) begin
-						i <= 1;
-						j <= 1;
-						iaddr <= 0;
-					end
-					else if(iaddr >= 4095) begin
-						i <= 1;
-						j <= 1;
-						cnt <= 0;
-					end
-					else if(cnt >= 64) begin
-						i <= 1;
-						j <= j+1;
-						cnt <= 0;
-					end
-					else begin
-						pixels[i][j] <= idata;
-						i <= i + 1;
-						cnt <= cnt + 1;
-						iaddr <= iaddr + 1;
-					end
-					
+					pixels[x+1][y+1] <= idata;
+					iaddr <= iaddr + 1;
 				end
 				CAL:begin
 					if(cnt >= 64) begin
@@ -119,6 +108,8 @@ module  CONV(
 		
 	end
 
+	assign x = iaddr - (y<<6);
+	assign y = iaddr>>6; //從 0 開始
 
 	assign k0 = ($signed(pixels[i-1][j-1]) * $signed(20'h0A89E)) >>> 16;
 	assign k1 = ($signed(pixels[ i ][j-1]) * $signed(20'h092D5)) >>> 16;
@@ -130,14 +121,10 @@ module  CONV(
 	assign k7 = ($signed(pixels[ i ][j+1]) * $signed(20'hFC834)) >>> 16;
 	assign k8 = ($signed(pixels[i+1][j+1]) * $signed(20'hFAC19)) >>> 16;
 
-	// 加總後仍然是 40-bit
-	assign data_temp = k0 + k1 + k2 + k3 + k4 + k5 + k6 + k7 + k8 + ($signed(20'h01310) <<< 16);
-
-	// 取 20-bit 結果
-	assign data = data_temp[35:16];  
+	assign data_temp = k0 + k1 + k2 + k3 + k4 + k5 + k6 + k7 + k8 + $signed(20'h01310);
 
 	// ReLU 操作
-	assign data_Relu = (data > 0) ? data : 0;
+	assign data_Relu = (data_temp > 0) ? data_temp : 0;
 
 
 endmodule
