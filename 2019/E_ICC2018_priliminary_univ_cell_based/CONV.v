@@ -21,18 +21,18 @@ module  CONV(
 	output reg [2:0]csel
 	);
 
-	reg [1:0] state, next_state;
+	reg [2:0] state, next_state;
 	reg [3:0] Kptr;//Kernel ptr
 	reg [19:0] pixels [65:0][65:0];
 	reg [8:0] i, j, cnt;
 	wire signed [39:0] k0, k1, k2, k3, k4, k5, k6, k7, k8;  // 40-bit 乘法結果
-	wire signed [39:0] data_temp;
+	wire signed [43:0] data_temp; // 10 個
 	wire signed [19:0] data, data_Relu;
-	wire [6:0] x, y;
+	wire [6:0] x, y, xc, yc;
 
 
 
-	parameter LOAD = 0, CAL = 1, DONE = 2, LOAD_pre = 3;
+	parameter LOAD = 0, CAL = 1, DONE = 2, LOAD_pre = 3, CAL_pre = 4;
 
 	always@(*) begin
 		case(state)
@@ -40,8 +40,11 @@ module  CONV(
 				next_state = LOAD;
 			end
 			LOAD: begin
-				if(iaddr >= 4095) next_state = CAL;
+				if(iaddr >= 4095) next_state = CAL_pre;
 				else next_state = LOAD;
+			end
+			CAL_pre:begin
+				next_state = CAL;
 			end
 			CAL:begin
 				if(caddr_wr >= 4095) next_state = DONE;
@@ -77,24 +80,18 @@ module  CONV(
 				LOAD_pre:begin
 					busy <= 1;
 					pixels[x+1][y+1] <= idata; //zero-padding
-					i <= 1;
-					j <= 1;
 				end
 				LOAD:begin
 					busy <= 1;
 					pixels[x+1][y+1] <= idata;
 					iaddr <= iaddr + 1;
 				end
+				CAL_pre:begin
+					cwr <= 1;
+					csel <= 3'b001;
+					cdata_wr <= data_Relu;
+				end
 				CAL:begin
-					if(cnt >= 64) begin
-						i <= 1;
-						j <= j+1;
-						cnt <= 0;
-					end
-					else begin
-						i <= i + 1;
-						cnt <= cnt + 1;
-					end
 					cwr <= 1;
 					csel <= 3'b001;
 					caddr_wr <= caddr_wr + 1;
@@ -111,18 +108,21 @@ module  CONV(
 	assign x = iaddr - (y<<6);
 	assign y = iaddr>>6; //從 0 開始
 
-	assign k0 = ($signed(pixels[i-1][j-1]) * $signed(20'h0A89E)) >>> 16;
-	assign k1 = ($signed(pixels[ i ][j-1]) * $signed(20'h092D5)) >>> 16;
-	assign k2 = ($signed(pixels[i+1][j-1]) * $signed(20'h06D43)) >>> 16;
-	assign k3 = ($signed(pixels[i-1][ j ]) * $signed(20'h01004)) >>> 16;
-	assign k4 = ($signed(pixels[ i ][ j ]) * $signed(20'hF8F71)) >>> 16;
-	assign k5 = ($signed(pixels[i+1][ j ]) * $signed(20'hF6E54)) >>> 16;
-	assign k6 = ($signed(pixels[i-1][j+1]) * $signed(20'hFA6D7)) >>> 16;
-	assign k7 = ($signed(pixels[ i ][j+1]) * $signed(20'hFC834)) >>> 16;
-	assign k8 = ($signed(pixels[i+1][j+1]) * $signed(20'hFAC19)) >>> 16;
+	assign xc = caddr_wr - (yc<<6);
+	assign yc = caddr_wr>>6; //從 0 開始
 
-	assign data_temp = k0 + k1 + k2 + k3 + k4 + k5 + k6 + k7 + k8 + $signed(20'h01310);
+	assign k0 = ($signed(pixels[ xc ][ yc ]) * $signed(20'h0A89E)); // 4.16 * 4.16 => 8.32 (40bit)
+	assign k1 = ($signed(pixels[xc+1][ yc ]) * $signed(20'h092D5));
+	assign k2 = ($signed(pixels[xc+2][ yc ]) * $signed(20'h06D43));
+	assign k3 = ($signed(pixels[ xc ][yc+1]) * $signed(20'h01004));
+	assign k4 = ($signed(pixels[xc+1][yc+1]) * $signed(20'hF8F71));
+	assign k5 = ($signed(pixels[xc+2][yc+1]) * $signed(20'hF6E54));
+	assign k6 = ($signed(pixels[ xc ][yc+2]) * $signed(20'hFA6D7));
+	assign k7 = ($signed(pixels[xc+1][yc+2]) * $signed(20'hFC834));
+	assign k8 = ($signed(pixels[xc+2][yc+2]) * $signed(20'hFAC19));
 
+	assign data_temp = k0 + k1 + k2 + k3 + k4 + k5 + k6 + k7 + k8 + $signed(20'h01310); //40bit * 10(個) =>取44bit (12.32)
+	assign data = (data_temp + (1 << 15)) >>> 16;  //小數第17位 四捨五入(第 17-bit 置 1)
 	// ReLU 操作
 	assign data_Relu = (data_temp > 0) ? data_temp : 0;
 
