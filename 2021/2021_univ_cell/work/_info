@@ -1,0 +1,55 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+dC:/DLIC/HW2_ApproxAvg
+vgeofence
+Z0 !s110 1741078117
+!i10b 1
+!s100 V40ME?JU=<I1cL^JZDgJn0
+IDTDGX@>aiO2C;=I73>F8G2
+Z1 VDg1SIo80bB@j0V0VzS_@n1
+Z2 dC:/IC_CONTEST/2021/2021_univ_cell
+w1741078114
+8C:/IC_CONTEST/2021/2021_univ_cell/geofence.v
+FC:/IC_CONTEST/2021/2021_univ_cell/geofence.v
+L0 1
+Z3 OV;L;10.5b;63
+r1
+!s85 0
+31
+Z4 !s108 1741078117.000000
+!s107 C:/IC_CONTEST/2021/2021_univ_cell/geofence.v|
+!s90 -reportprogress|300|-work|work|-stats=none|C:/IC_CONTEST/2021/2021_univ_cell/geofence.v|
+!i113 1
+o-work work
+Z5 tCvgOpt 0
+vtestfixture
+DXx6 sv_std 3 std 0 22 AD7iAPLo6nTIKk<N0eo=D3
+R0
+!i10b 1
+!s100 gW<L1jM2iNXiG=[Gd8Z:a2
+IImQI:m@fH_TX]<>o<j>]I2
+R1
+!s105 tb_sv_unit
+S1
+R2
+w1740988601
+8C:/IC_CONTEST/2021/2021_univ_cell/tb.sv
+FC:/IC_CONTEST/2021/2021_univ_cell/tb.sv
+L0 7
+R3
+r1
+!s85 0
+31
+R4
+!s107 C:/IC_CONTEST/2021/2021_univ_cell/tb.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/IC_CONTEST/2021/2021_univ_cell/tb.sv|
+!i113 1
+o-work work -sv
+R5
