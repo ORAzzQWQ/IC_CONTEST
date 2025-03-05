@@ -1,4 +1,11 @@
-C:/IC_CONTEST/2021/2021_univ_cell/tb.sv {1 {vlog -work work -sv -stats=none C:/IC_CONTEST/2021/2021_univ_cell/tb.sv
+C:/IC_CONTEST/2021/2021_univ_cell/geofence.v {1 {vlog -work work -stats=none C:/IC_CONTEST/2021/2021_univ_cell/geofence.v
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module geofence
+
+Top level modules:
+	geofence
+
+} {} {}} C:/IC_CONTEST/2021/2021_univ_cell/tb.sv {1 {vlog -work work -sv -stats=none C:/IC_CONTEST/2021/2021_univ_cell/tb.sv
 Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
 -- Compiling module testfixture
 

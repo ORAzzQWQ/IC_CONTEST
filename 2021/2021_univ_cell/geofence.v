@@ -48,10 +48,6 @@ always@(posedge clk or posedge reset) begin
         plus <= 0;
         valid <= 0;
         is_inside <= 0;
-        Ax <= 0;
-        Ay <= 0;
-        Bx <= 0;
-        By <= 0;
         cnt <= 0;
     end
     else begin
@@ -123,6 +119,10 @@ end
 assign cross_product = Ax * By - Bx * Ay;
 
 always@(*)begin
+    Ax = 0;
+    Ay = 0;
+    Bx = 0;
+    By = 0;
     case(state)
         SORT:begin
             Ax = Xdata[ptrA] - Xdata[0];
@@ -135,12 +135,6 @@ always@(*)begin
             Ay = Ydata[ptrA] - ty;
             Bx = Xdata[ptrB] - Xdata[ptrA];
             By = Ydata[ptrB] - Ydata[ptrA];      
-        end
-        default:begin
-            Ax = 0;
-            Ay = 0;
-            Bx = 0;
-            By = 0;     
         end
     endcase
 end

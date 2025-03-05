@@ -33,11 +33,11 @@ geofence u_geofence(.clk(clk),
 
 always begin #(`CYCLE/2) clk = ~clk; end
 
-initial begin
-    $fsdbDumpfile("geofence.fsdb");
-    $fsdbDumpvars();
-    $fsdbDumpMDA;
-end
+// initial begin
+//     $fsdbDumpfile("geofence.fsdb");
+//     $fsdbDumpvars();
+//     $fsdbDumpMDA;
+// end
 
 //initial begin
 //    $dumpfile("geofence.vcd");
