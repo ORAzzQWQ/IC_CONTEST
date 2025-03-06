@@ -27,6 +27,7 @@ module  CONV(
 	parameter k4 = 20'hF8F71, k5 = 20'hF6E54, k6 = 20'hFA6D7, k7 = 20'hFC834, k8 = 20'hFAC19;
 	wire [19:0] data;
 	wire [44:0] data_tmp;
+	reg [6:0] x, y;
 
 
 	always@(*) begin
@@ -53,7 +54,6 @@ module  CONV(
 		if(reset) begin
 			state <= IDLE;
 			busy  <= 0;
-			iaddr <= 0;
 
 			cwr   <= 0;
 			caddr_wr <= 0;
@@ -73,11 +73,7 @@ module  CONV(
 					cnt   <= 0;
 				end
 				LOAD:begin
-					if(x == 0 || y == 0 || x == 63 || y == 63) begin
-						data_tmp <= idata;
-					end
 					cnt <= cnt + 1;
-					iaddr <= iaddr + 1;
 				end
 				OUT_L0:begin
 				end
@@ -85,7 +81,25 @@ module  CONV(
 				end
 			endcase
 		end
-		
+	end
+
+	always @(posedge clk or posedge reset) begin
+		if(reset) begin
+			iaddr <= 0;
+		end
+		else begin
+			case(cnt)
+				0: iaddr = caddr_wr;
+				1: iaddr = caddr_wr;
+				2: iaddr = caddr_wr;
+				3: iaddr = caddr_wr - 1;
+				4: iaddr = caddr_wr;
+				5: iaddr = caddr_wr + 1;
+				6: iaddr = caddr_wr;
+				7: iaddr = caddr_wr;
+				8: iaddr = caddr_wr;
+			endcase
+		end
 	end
 
 	always@(*) begin
@@ -104,7 +118,7 @@ module  CONV(
 
 	always@(*) begin
 		case(cnt)
-			0: k_reg = k0;
+			0: x = caddr_wr > 64 ? ;
 			1: k_reg = k1;
 			2: k_reg = k2;
 			3: k_reg = k3;
