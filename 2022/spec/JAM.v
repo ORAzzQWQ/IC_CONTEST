@@ -8,8 +8,9 @@ output reg [3:0] MatchCount,
 output reg [9:0] MinCost,
 output reg Valid );
 
-reg [3:0] serise[7:0];
-reg [3:0] cnt, ptr1, ptr2, curMin, i;
+reg [2:0] serise[7:0];
+reg [3:0] cnt;
+reg [2:0] ptr1, ptr2, curMin, i; //減少冗於的bit
 reg [2:0] state, next_state;
 reg [9:0] CurCost;
 reg [15:0] total;
@@ -83,7 +84,7 @@ always@(posedge CLK or posedge RST) begin
                 end
             end
             FLIP:begin
-                for(i=0;i<ptr1[3:1]; i=i+1)begin
+                for(i=0;i<(ptr1>>2); i=i+1)begin
                     serise[i] <= serise[ptr1-1-i];
                     serise[ptr1-1-i] <= serise[i];
                 end
@@ -94,42 +95,89 @@ end
 
 always@(posedge CLK or posedge RST) begin
     if(RST) begin
-        J <= 0;
-        W <= 0;
-        cnt <= 0;
-        CurCost <= 0;
         ptr1 <= 1;
         ptr2 <= 0;
+    end
+    else begin
+        case(state)
+            FIND_MAX:if(serise[ptr1-1] < serise[ptr1]) ptr1 <= ptr1 + 1;
+            FIND_MIN:if(ptr2 < ptr1) ptr2 <= ptr2 + 1;
+            default:begin
+                ptr1 <= 1;
+                ptr2 <= 0;
+            end
+        endcase
+    end
+end
+
+always@(posedge CLK or posedge RST) begin
+    if(RST) cnt <= 0;
+    else if(state == CAL) cnt <= cnt + 1;
+    else cnt <= 0;
+end
+
+always@(posedge CLK or posedge RST) begin //把for迴圈展開可以少1000
+    if(RST) begin
+        J <= 0;
+        W <= 0;
+    end
+    else if(state == CAL) begin
+        case(cnt)
+            0:begin
+                J <= 0;
+                W <= serise[7];
+            end
+            1:begin
+                J <= 1;
+                W <= serise[6];
+            end
+            2:begin
+                J <= 2;
+                W <= serise[5];
+            end
+            3:begin
+                J <= 3;
+                W <= serise[4];
+            end
+            4:begin
+                J <= 4;
+                W <= serise[3];
+            end
+            5:begin
+                J <= 5;
+                W <= serise[2];
+            end
+            6:begin
+                J <= 6;
+                W <= serise[1];
+            end
+            7:begin
+                J <= 7;
+                W <= serise[0];
+            end
+        endcase
+    end
+end
+
+always@(posedge CLK or posedge RST) begin
+    if(RST) begin
+        CurCost <= 0;
         curMin <= 8;
         total  <= 0;
     end
     else begin
         case(state)
-            FIND_MAX:begin
-                if(serise[ptr1-1] < serise[ptr1]) ptr1 <= ptr1 + 1;
-            end
             FIND_MIN:begin
-                if(ptr2 < ptr1) ptr2 <= ptr2 + 1;
                 if(serise[ptr2] > serise[ptr1]) begin
                     if(curMin == 8) curMin <= ptr2;
                     else curMin <= serise[ptr2] < serise[curMin] ? ptr2 : curMin;
                 end
             end
-            FLIP:begin
-            end
             CAL:begin
-                cnt <= cnt + 1;
-                ptr1 <= 1;
-                ptr2 <= 0;
                 curMin <= 8;
-                if(cnt < 8) begin
-                    J   <= cnt;
-                    W   <= serise[7-cnt];
-                end
                 if(cnt >= 2) CurCost <= CurCost + Cost;
             end
             FIN:begin
-                cnt <= 0;
                 CurCost <= 0;
                 total <= total + 1;
             end
