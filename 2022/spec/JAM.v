@@ -9,8 +9,8 @@ output reg [9:0] MinCost,
 output reg Valid );
 
 reg [2:0] serise[7:0];
-reg [3:0] cnt;
-reg [2:0] ptr1, ptr2, curMin, i; //減少冗於的bit
+reg [3:0] cnt, curMin;
+reg [2:0] ptr1, ptr2, i;
 reg [2:0] state, next_state;
 reg [9:0] CurCost;
 reg [15:0] total;
@@ -21,7 +21,7 @@ always@(*) begin
         FIND_MAX: next_state = (serise[ptr1-1] > serise[ptr1]) ? FIND_MIN : FIND_MAX;
         FIND_MIN: next_state = (ptr2 < ptr1) ? FIND_MIN : FLIP;
         FLIP:     next_state = CAL;
-        CAL:      next_state = cnt == 9 ? FIN : CAL;
+        CAL:      next_state = (cnt == 9 || CurCost > MinCost)? FIN : CAL;
         FIN:      next_state = FIND_MAX;
         default:  next_state = FIN;
     endcase
@@ -84,7 +84,7 @@ always@(posedge CLK or posedge RST) begin
                 end
             end
             FLIP:begin
-                for(i=0;i<(ptr1>>2); i=i+1)begin
+                for(i=0;i<ptr1[2:1]; i=i+1)begin
                     serise[i] <= serise[ptr1-1-i];
                     serise[ptr1-1-i] <= serise[i];
                 end
@@ -116,7 +116,7 @@ always@(posedge CLK or posedge RST) begin
     else cnt <= 0;
 end
 
-always@(posedge CLK or posedge RST) begin //把for迴圈展開可以少1000
+always@(posedge CLK or posedge RST) begin
     if(RST) begin
         J <= 0;
         W <= 0;
