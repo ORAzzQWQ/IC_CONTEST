@@ -14,6 +14,7 @@ reg [2:0] ptr1, ptr2, i;
 reg [2:0] state, next_state;
 reg [9:0] CurCost;
 reg [15:0] total;
+reg [9:0] postfix_cost[7:0];
 
 parameter FIND_MAX = 0, FIND_MIN = 1, FLIP = 2, CAL = 3, FIN = 4;
 always@(*) begin
@@ -39,25 +40,20 @@ always@(posedge CLK or posedge RST) begin
 end
 
 always@(posedge CLK or posedge RST) begin
-    if(RST) MatchCount <= 0;
+    if(RST) begin 
+        MatchCount <= 0;
+        MinCost <= 10'd1023;
+    end
     else begin
         case(state)
             FIN:begin
                 if(CurCost == MinCost) MatchCount <= MatchCount + 1;
-                else if(CurCost < MinCost) MatchCount <= 1;
-                else MatchCount <= MatchCount;
+                else if(CurCost < MinCost) begin
+                    MinCost <= CurCost;
+                    MatchCount <= 1;
+                end
             end
-        endcase
-    end
-end
-
-always@(posedge CLK or posedge RST) begin
-    if(RST) MinCost <= 9'b111111111;
-    else begin
-        case(state)
-            FIN:begin
-                if(CurCost < MinCost) MinCost <= CurCost;
-                else MinCost <= MinCost;
+            default:begin
             end
         endcase
     end
@@ -110,13 +106,13 @@ always@(posedge CLK or posedge RST) begin
     end
 end
 
-always@(posedge CLK or posedge RST) begin
+always@(posedge CLK or posedge RST) begin //cnt
     if(RST) cnt <= 0;
     else if(state == CAL) cnt <= cnt + 1;
     else cnt <= 0;
 end
 
-always@(posedge CLK or posedge RST) begin
+always@(posedge CLK or posedge RST) begin //W, J
     if(RST) begin
         J <= 0;
         W <= 0;
@@ -164,6 +160,14 @@ always@(posedge CLK or posedge RST) begin
         CurCost <= 0;
         curMin <= 8;
         total  <= 0;
+        postfix_cost[0] <= 0;
+        postfix_cost[1] <= 0;
+        postfix_cost[2] <= 0;
+        postfix_cost[3] <= 0;
+        postfix_cost[4] <= 0;
+        postfix_cost[5] <= 0;
+        postfix_cost[6] <= 0;
+        postfix_cost[7] <= 0;
     end
     else begin
         case(state)
@@ -175,7 +179,36 @@ always@(posedge CLK or posedge RST) begin
             end
             CAL:begin
                 curMin <= 8;
-                if(cnt >= 2) CurCost <= CurCost + Cost;
+                // if(cnt >= 2) CurCost <= CurCost + Cost;
+                case(cnt)
+                    2:begin
+                        postfix_cost[7] <= Cost;
+                    end
+                    3:begin
+                        postfix_cost[6] <= postfix_cost[7] + Cost;
+                    end
+                    4:begin
+                        postfix_cost[5] <= postfix_cost[6] + Cost;
+                    end
+                    5:begin
+                        postfix_cost[4] <= postfix_cost[5] + Cost;
+                    end
+                    6:begin
+                        postfix_cost[3] <= postfix_cost[4] + Cost;
+                    end
+                    7:begin
+                        postfix_cost[2] <= postfix_cost[3] + Cost;
+                    end
+                    8:begin
+                        postfix_cost[1] <= postfix_cost[2] + Cost;
+                    end
+                    9:begin
+                        // postfix_cost[0] <= postfix_cost[1] + Cost;
+                        CurCost <= postfix_cost[1] + Cost;
+                    end
+                    default:begin
+                    end
+                endcase
             end
             FIN:begin
                 CurCost <= 0;
