@@ -9,12 +9,11 @@ output reg [9:0] MinCost,
 output reg Valid );
 
 reg [2:0] serise[7:0];
-reg [3:0] cnt, curMin;
+reg [3:0] cnt, curMin, data_ready;
 reg [2:0] ptr1, ptr2, i;
 reg [2:0] state, next_state;
 reg [9:0] CurCost;
 reg [15:0] total;
-reg [9:0] postfix_cost[7:0];
 
 parameter FIND_MAX = 0, FIND_MIN = 1, FLIP = 2, CAL = 3, FIN = 4;
 always@(*) begin
@@ -107,9 +106,18 @@ always@(posedge CLK or posedge RST) begin
 end
 
 always@(posedge CLK or posedge RST) begin //cnt
-    if(RST) cnt <= 0;
-    else if(state == CAL) cnt <= cnt + 1;
-    else cnt <= 0;
+    if(RST) begin
+        cnt <= 0;
+        data_ready <= 0;
+    end
+    else if(state == FIND_MIN) begin
+        cnt <= 7-ptr1;
+        data_ready <= 0;
+    end
+    else if(state == CAL)begin
+        cnt <= cnt + 1;
+        data_ready <= data_ready + 1;
+    end
 end
 
 always@(posedge CLK or posedge RST) begin //W, J
@@ -155,19 +163,21 @@ always@(posedge CLK or posedge RST) begin //W, J
     end
 end
 
+reg [9:0] CostSum [7:0];  // Prefix sum
 always@(posedge CLK or posedge RST) begin
     if(RST) begin
         CurCost <= 0;
         curMin <= 8;
         total  <= 0;
-        postfix_cost[0] <= 0;
-        postfix_cost[1] <= 0;
-        postfix_cost[2] <= 0;
-        postfix_cost[3] <= 0;
-        postfix_cost[4] <= 0;
-        postfix_cost[5] <= 0;
-        postfix_cost[6] <= 0;
-        postfix_cost[7] <= 0;
+
+        CostSum[0] <= 0;
+        CostSum[1] <= 0;
+        CostSum[2] <= 0;
+        CostSum[3] <= 0;
+        CostSum[4] <= 0;
+        CostSum[5] <= 0;
+        CostSum[6] <= 0;
+        CostSum[7] <= 0;
     end
     else begin
         case(state)
@@ -179,36 +189,42 @@ always@(posedge CLK or posedge RST) begin
             end
             CAL:begin
                 curMin <= 8;
-                // if(cnt >= 2) CurCost <= CurCost + Cost;
-                case(cnt)
-                    2:begin
-                        postfix_cost[7] <= Cost;
-                    end
-                    3:begin
-                        postfix_cost[6] <= postfix_cost[7] + Cost;
-                    end
-                    4:begin
-                        postfix_cost[5] <= postfix_cost[6] + Cost;
-                    end
-                    5:begin
-                        postfix_cost[4] <= postfix_cost[5] + Cost;
-                    end
-                    6:begin
-                        postfix_cost[3] <= postfix_cost[4] + Cost;
-                    end
-                    7:begin
-                        postfix_cost[2] <= postfix_cost[3] + Cost;
-                    end
-                    8:begin
-                        postfix_cost[1] <= postfix_cost[2] + Cost;
-                    end
-                    9:begin
-                        // postfix_cost[0] <= postfix_cost[1] + Cost;
-                        CurCost <= postfix_cost[1] + Cost;
-                    end
-                    default:begin
-                    end
-                endcase
+                if (data_ready>1) begin
+                    case(cnt)
+                        2:begin
+                            CostSum[7] <= Cost;
+                            CurCost <= Cost;
+                        end
+                        3:begin
+                            CostSum[6] <= CostSum[7] + Cost;
+                            CurCost <= CostSum[7] + Cost;
+                        end
+                        4:begin
+                            CostSum[5] <= CostSum[6] + Cost;
+                            CurCost <= CostSum[6] + Cost;
+                        end
+                        5:begin
+                            CostSum[4] <= CostSum[5] + Cost;
+                            CurCost <= CostSum[5] + Cost;
+                        end
+                        6:begin
+                            CostSum[3] <= CostSum[4] + Cost;
+                            CurCost <= CostSum[4] + Cost;
+                        end
+                        7:begin
+                            CostSum[2] <= CostSum[3] + Cost;
+                            CurCost <= CostSum[3] + Cost;
+                        end
+                        8:begin
+                            CostSum[1] <= CostSum[2] + Cost;
+                            CurCost <= CostSum[2] + Cost;
+                        end
+                        9:begin
+                            CostSum[0] <= CostSum[1] + Cost;
+                            CurCost <= CostSum[1] + Cost;
+                        end
+                    endcase
+                end
             end
             FIN:begin
                 CurCost <= 0;
@@ -217,7 +233,6 @@ always@(posedge CLK or posedge RST) begin
         endcase
     end
 end
-
 endmodule
 
 
