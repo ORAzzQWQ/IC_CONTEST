@@ -18,122 +18,216 @@ module  CONV(
 	output reg [11:0]caddr_rd,
 	input [19:0]cdata_rd,
 	
-	output reg [2:0]
+	output reg [2:0] csel
 	);
 
-	reg [2:0] state, next_state;
-	parameter IDLE = 0, LOAD = 1, OUT_L0 = 2, OUT_L1 = 3;
+	reg [3:0] state, next_state;
+	parameter IDLE = 0, LOAD = 1, OUT_L0 = 2, READ_L1 = 3, OUT_L1 = 4, FIN = 5;
 	parameter k0 = 20'h0A89E, k1 = 20'h092D5, k2 = 20'h06D43, k3 = 20'h01004;
 	parameter k4 = 20'hF8F71, k5 = 20'hF6E54, k6 = 20'hFA6D7, k7 = 20'hFC834, k8 = 20'hFAC19;
-	wire [19:0] data;
-	wire [44:0] data_tmp;
-	reg [6:0] x, y;
+	parameter bias = 20'h01310;
 
+	reg [11:0] addr_cnt; //{y,x} y:addr_cnt[11:6] ,  x:addr_cnt[5:0]
+	reg [3:0]  cnt;
+
+	wire [5:0] x, y;
+
+	assign x = addr_cnt[5:0];
+	assign y = addr_cnt[11:6];
+
+	reg signed [19:0] pix;
+	reg signed [19:0] kernel;
+
+	always@(posedge clk or posedge reset)begin
+		if(reset) state <= IDLE;
+		else state <= next_state;
+	end
 
 	always@(*) begin
-		case(state)
-			IDLE:begin
-				if(ready) next_state = LOAD;
-				else next_state = IDLE;
-			end
-			LOAD:begin
-				if(cnt>=9) next_state = OUT_L0;
-				else next_state = LOAD;
-			end
-			OUT_L0:begin
-				next_state = LOAD;
-			end
-			OUT_L1:begin
-			end
+		case (state)
+			IDLE:    next_state = LOAD;
+			LOAD:    next_state = (cnt == 10) ? OUT_L0 : LOAD;
+			OUT_L0:  next_state = (addr_cnt == 4095) ? READ_L1 : LOAD;
+			READ_L1: next_state = cnt==4 ? OUT_L1 : READ_L1;
+			OUT_L1:  next_state = (addr_cnt == 4095) ? FIN : READ_L1;
+			FIN:     next_state = IDLE;
+			default: next_state = IDLE;
 		endcase
+	end
+
+	always@(posedge clk or posedge reset)begin
+		if(reset) busy <= 0;
+		else if(ready) busy <= 1;
+		else if(state == FIN) busy <= 0;
 	end
 
 
 
-	always @(posedge clk or posedge reset) begin
+	always@(posedge clk or posedge reset)begin
 		if(reset) begin
-			state <= IDLE;
-			busy  <= 0;
+			addr_cnt <= 0;
+		end
+		else begin
+			case (state)
+				OUT_L0: addr_cnt <= addr_cnt + 1;
+				OUT_L1: begin
+					if(y==62) addr_cnt <= {y + 6'd2, 6'd0};
+					else addr_cnt <= addr_cnt + 2;
+				end
+			endcase
+		end
+	end
 
-			cwr   <= 0;
+
+
+
+	always @(posedge clk or posedge reset) begin
+		if(reset) cnt <= 0;
+		else begin
+			case (state)
+				LOAD:    cnt <= cnt + 1;
+				READ_L1: cnt <= cnt + 1;
+				default: cnt <= 0;
+			endcase
+		end
+	end
+
+	always @(posedge clk or posedge reset) begin
+		if(reset) iaddr <= 0;
+		else if(state == LOAD) begin
+			case(cnt)
+				0: iaddr <= (y == 0 || x == 0) ? 20'd0 : {y - 6'd1, x - 6'd1}; 
+				1: iaddr <= (y == 0) ? 20'd0 : {y - 6'd1, x};
+				2: iaddr <= (y == 0 || x == 63) ? 20'd0 : {y - 6'd1, x + 6'd1};
+				3: iaddr <= (x == 0) ? 20'd0 : {y, x - 6'd1};
+				4: iaddr <= {y, x};
+				5: iaddr <= (x == 63) ? 20'd0 : {y, x + 6'd1};
+				6: iaddr <= (y == 63 || x == 0) ? 20'd0 : {y + 6'd1, x - 6'd1};
+				7: iaddr <= (y == 63) ? 20'd0 : {y + 6'd1, x};
+				8: iaddr <= (y == 63 || x == 63) ? 20'd0 : {y + 6'd1, x + 6'd1};
+			endcase
+		end
+	end
+
+	always @(posedge clk or posedge reset) begin
+		if(reset) pix <= 0;
+		else if(state == LOAD) begin
+			case(cnt)
+				1: pix <= (y == 0 || x == 0) ? 20'd0 : idata; 
+				2: pix <= (y == 0) ? 20'd0 : idata;
+				3: pix <= (y == 0 || x == 63) ? 20'd0 : idata;
+				4: pix <= (x == 0) ? 20'd0 : idata;
+				5: pix <= idata;
+				6: pix <= (x == 63) ? 20'd0 : idata;
+				7: pix <= (y == 63 || x == 0) ? 20'd0 : idata;
+				8: pix <= (y == 63) ? 20'd0 : idata;
+				9: pix <= (y == 63 || x == 63) ? 20'd0 : idata;
+				default: pix <= 20'd0;
+			endcase
+		end
+	end
+
+	always @(posedge clk or posedge reset) begin
+		if(reset) kernel = k0;
+		else if(state == LOAD) begin
+		case(cnt)
+			1: kernel = k0;
+			2: kernel = k1;
+			3: kernel = k2;
+			4: kernel = k3;
+			5: kernel = k4;
+			6: kernel = k5;
+			7: kernel = k6;
+			8: kernel = k7;
+			9: kernel = k8;
+		endcase
+		end
+	end
+
+	wire signed [39:0] product_tmp;
+	assign product_tmp = kernel * pix;
+
+	reg signed [39:0] product_sum;
+	always @(posedge clk or posedge reset) begin
+		if(reset) product_sum <= 40'd0;
+		else if(state == LOAD)begin
+			case(cnt)
+				0: product_sum <= 40'd0;
+				2: product_sum <= product_sum + product_tmp;
+				3: product_sum <= product_sum + product_tmp;
+				4: product_sum <= product_sum + product_tmp;
+				5: product_sum <= product_sum + product_tmp;
+				6: product_sum <= product_sum + product_tmp;
+				7: product_sum <= product_sum + product_tmp;
+				8: product_sum <= product_sum + product_tmp;
+				9: product_sum <= product_sum + product_tmp;
+				10: product_sum <= product_sum + product_tmp + {4'd0, bias, 1'b1, 15'd0}; //1'b1用於四捨五入
+			endcase
+		end
+	end
+
+
+
+	always@(posedge clk or posedge reset)begin
+		if(reset) begin
+			cwr <= 0;
 			caddr_wr <= 0;
 			cdata_wr <= 0;
-
-			crd   <= 0;
-			caddr_rd <= 0;
-
-			csel <= 0;
 		end
 		else begin
-			state <= next_state;
-			case(state)
-				IDLE:begin
-					busy  <= 1;
-					iaddr <= 0;
-					cnt   <= 0;
-				end
-				LOAD:begin
-					cnt <= cnt + 1;
-				end
+			case (state)  
 				OUT_L0:begin
+					cwr <= 1;
+					caddr_wr <= addr_cnt;
+					cdata_wr <= product_sum[39] ? 20'd0 : product_sum[35:16];
 				end
-				OUT_L1:begin
+				default: begin
+					cwr <= 0;
+					caddr_wr <= 0;
+					cdata_wr <= 0;
 				end
+			endcase
+		end
+	end
+
+	always@(posedge clk or posedge reset)begin
+		if(reset) begin
+			csel <= 3'b000;
+		end
+		else begin
+			case (state)  
+				OUT_L0: csel <= 3'b001;
+				READ_L1:csel <= 3'b001;
+				OUT_L1: csel <= 3'b011;
 			endcase
 		end
 	end
 
 	always @(posedge clk or posedge reset) begin
-		if(reset) begin
-			iaddr <= 0;
-		end
-		else begin
+		if(reset) caddr_rd <= 0;
+		else if(state == READ_L1) begin
 			case(cnt)
-				0: iaddr = caddr_wr;
-				1: iaddr = caddr_wr;
-				2: iaddr = caddr_wr;
-				3: iaddr = caddr_wr - 1;
-				4: iaddr = caddr_wr;
-				5: iaddr = caddr_wr + 1;
-				6: iaddr = caddr_wr;
-				7: iaddr = caddr_wr;
-				8: iaddr = caddr_wr;
+				0: caddr_rd <= {y, x}; 
+				1: caddr_rd <= {y, x + 6'd1};
+				2: caddr_rd <= {y + 6'd1, x};
+				3: caddr_rd <= {y + 6'd1, x + 6'd1};
 			endcase
 		end
 	end
 
-	always@(*) begin
-		case(cnt)
-		0: k_reg = k0;
-		1: k_reg = k1;
-		2: k_reg = k2;
-		3: k_reg = k3;
-		4: k_reg = k4;
-		5: k_reg = k5;
-		6: k_reg = k6;
-		7: k_reg = k7;
-		8: k_reg = k8;
-		endcase
+	reg signed [19:0] max;
+	always @(posedge clk or posedge reset) begin
+		if(reset) max <= 0;
+		else if(state == READ_L1) begin
+			case(cnt)
+				1: max <= cdata_rd; 
+				2: max <= cdata_rd > max ? cdata_rd : max;
+				3: max <= cdata_rd > max ? cdata_rd : max;
+				4: max <= cdata_rd > max ? cdata_rd : max;
+				default: max <= 20'd0;
+			endcase
+		end
 	end
-
-	always@(*) begin
-		case(cnt)
-			0: x = caddr_wr > 64 ? ;
-			1: k_reg = k1;
-			2: k_reg = k2;
-			3: k_reg = k3;
-			4: k_reg = k4;
-			5: k_reg = k5;
-			6: k_reg = k6;
-			7: k_reg = k7;
-			8: k_reg = k8;
-		endcase
-	end
-
-	assign x = iaddr - {y,6'd0};
-	assign y = iaddr>>6; //從 0 開始
-	
-
 
 endmodule
 
