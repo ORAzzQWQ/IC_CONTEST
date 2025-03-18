@@ -48,7 +48,7 @@ module  CONV(
 	always@(*) begin
 		case (state)
 			IDLE:    next_state = LOAD;
-			LOAD:    next_state = (cnt == 10) ? OUT_L0 : LOAD;
+			LOAD:    next_state = (cnt == 11) ? OUT_L0 : LOAD;
 			OUT_L0:  next_state = (addr_cnt == 4095) ? READ_L1 : LOAD;
 			READ_L1: next_state = (cnt == 4) ? OUT_L1 : READ_L1;
 			OUT_L1:  next_state = (addr_cnt == 4030) ? FIN : READ_L1;
@@ -155,7 +155,8 @@ module  CONV(
 				6: product_sum <= product_sum + product_tmp;
 				7: product_sum <= product_sum + product_tmp;
 				8: product_sum <= product_sum + product_tmp;
-				9: product_sum <= product_sum + product_tmp + {4'd0, bias, 1'b1, 15'd0}; //1'b1用於四捨五入
+				9: product_sum <= product_sum + product_tmp;
+				10: product_sum <= product_sum + {4'd0, bias, 1'b1, 15'd0}; //1'b1用於四捨五入
 				default: product_sum <= product_sum; 
 			endcase
 		end
@@ -163,10 +164,10 @@ module  CONV(
 			product_sum <= 40'd0;
 		end
 	end
-	reg signed [39:0] product_sum_reg;
-	always@(*) begin
-		product_sum_reg = product_sum[39] ? 20'd0 : product_sum[35:16];
-	end
+	// reg signed [39:0] product_sum_reg;
+	// always@(*) begin
+	// 	product_sum_reg = product_sum[39] ? 20'd0 : product_sum[35:16];
+	// end
 
 
 	always@(posedge clk or posedge reset)begin
@@ -180,7 +181,7 @@ module  CONV(
 				OUT_L0:begin
 					cwr <= 1;
 					caddr_wr <= addr_cnt;
-					cdata_wr <= product_sum_reg;
+					cdata_wr <= product_sum[39] ? 20'd0 : product_sum[35:16];
 				end
 				OUT_L1:begin
 					cwr <= 1;
