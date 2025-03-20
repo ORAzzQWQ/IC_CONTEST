@@ -1,0 +1,15 @@
+C:/IC_CONTEST/2020/2020_univ_cell/tb_term.sv {1 {vlog -work work -sv -stats=none C:/IC_CONTEST/2020/2020_univ_cell/tb_term.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module testfixture
+
+Top level modules:
+	testfixture
+
+} {} {}} C:/IC_CONTEST/2020/2020_univ_cell/tb.sv {1 {vlog -work work -sv -stats=none C:/IC_CONTEST/2020/2020_univ_cell/tb.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module testfixture
+
+Top level modules:
+	testfixture
+
+} {} {}}
