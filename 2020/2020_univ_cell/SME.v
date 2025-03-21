@@ -6,7 +6,7 @@ input isstring;
 input ispattern;
 output reg match;
 output reg [4:0] match_index;
-output reg valid;
+output reg valid; 
 
 
 parameter LOAD_STR = 0, LOAD_PAT = 1, CAL = 2, OUT = 3;
@@ -30,7 +30,7 @@ end
 reg [7:0] str[31:0], pat[7:0];
 integer i;
 reg [4:0] strptr;
-reg [2:0] patptr;
+reg [3:0] patptr;
 
 //load str
 always@(posedge clk or posedge reset) begin
@@ -58,7 +58,7 @@ always@(posedge clk or posedge reset) begin
         for (i = 0; i<8 ; i=i+1) begin
             pat[i] <= 8'd0;
         end
-        patptr <= 3'd0;
+        patptr <= 4'd0;
     end
     else if(ispattern)begin
         pat[patptr] <= chardata;
@@ -68,41 +68,93 @@ always@(posedge clk or posedge reset) begin
         for (i = 0; i<8 ; i=i+1) begin
             pat[i] <= 8'd0;
         end
-        patptr <= 3'd0;
+        patptr <= 4'd0;
     end
 end
 
 
 reg [4:0] find_str;
 reg [2:0] find_pat;
-
-reg match_start;
 reg [4:0] match_cnt;
+
+wire match_1, match_start, match_end;
+
+assign match_1 = (pat[find_pat] == 8'h2E) || (str[find_str] == pat[find_pat]);
+assign match_start = (pat[0] == 8'h5E);
+assign match_end = (pat[patptr-1] == 8'h24);
 
 always@(posedge clk or posedge reset) begin
     if(reset) begin
         find_str <= 5'd0;
         find_pat <= 3'd0;
         match_index <= 5'd0;
-        match_cnt   <= 5'd0;
     end
     else if(state == CAL)begin
         if(find_str < strptr) begin
-            if(str[find_str] == pat[find_pat]) begin
+            if(match_1 && match_end) begin
+                // if(str[find_str + 1] == 8'h20 && find_pat == patptr - 2) begin
+                //     find_pat <= find_pat + 2;
+                //     find_str <= find_str + 2;
+                // end
+            end
+            else if(match_1) begin
                 if(match_cnt == 0) match_index <= find_str;
-                match_cnt <= match_cnt + 1;
-                find_str <= find_str + 1;
                 find_pat <= find_pat + 1;
+                find_str <= find_str + 1;
+            end
+            else if(match_start) begin
+                if(find_str == 0 && pat[find_pat + 1] == str[find_str + 1]) begin
+                    match_index <= find_str;
+                    find_pat <= find_pat + 2;
+                    find_str <= find_str + 2;
+                end
+                else if(str[find_str] == 8'h20 && pat[find_pat + 1] == str[find_str + 1]) begin
+                    match_index <= find_str + 1;
+                    find_pat <= find_pat + 2;
+                    find_str <= find_str + 2;
+                end
+                else begin
+                    find_pat <= 3'd0;
+                    find_str <= find_str + 1;
+                end
             end
             else begin
-                match_cnt<= 5'd0;
                 find_str <= find_str + 1;
+                find_pat <= 3'd0;
             end
+            
         end
     end
     else if(state == OUT) begin
         find_str <= 5'd0;
         find_pat <= 3'd0;
+    end
+end
+
+//match_cnt
+always@(posedge clk or posedge reset) begin
+    if(reset) begin
+        match_cnt   <= 5'd0;
+    end
+    else if(state == CAL)begin
+        if(find_str < strptr) begin
+            if(match_1 && match_end) begin
+                if(find_str == strptr - 1) match_cnt <= match_cnt + 2;
+                else if(str[find_str + 1] == 8'h20 && find_pat == patptr - 2) match_cnt <= match_cnt + 2;
+                else match_cnt <= match_cnt + 1;
+            end
+            else if (match_1) begin      
+                match_cnt <= match_cnt + 1;
+            end
+            else if(match_start) begin
+                if(find_str == 0 && pat[find_pat + 1] == str[find_str + 1]) match_cnt <= match_cnt + 2;
+                else if(str[find_str] == 8'h20 && pat[find_pat + 1] == str[find_str + 1]) match_cnt <= match_cnt + 2;
+            end
+            else if (match_cnt == patptr) match_cnt<= match_cnt;
+            else match_cnt <= 5'd0;
+        end
+    end
+    else if(state == LOAD_PAT) begin
         match_cnt<= 5'd0;
     end
 end
@@ -113,6 +165,7 @@ always@(posedge clk or posedge reset) begin
     else if(next_state == CAL)begin
         if(strptr==0) cal_done <= 1;
         else if(find_str == strptr - 1) cal_done <= 1;
+        else if(match_cnt == patptr) cal_done <= 1;
     end
     else if(state == OUT) cal_done <= 0;
 end
